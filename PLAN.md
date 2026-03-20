@@ -371,15 +371,22 @@ npx expo start
 - Configure Google OAuth in Google Cloud Console with your bundle IDs
 - Apple Sign-In requires a real device (not simulator) with a paid Apple Developer account
 
-### Phase 2 — Services + Notifications
-- [ ] Services: list by category, create, edit, delete, search (`app/(tabs)/services/`)
-- [ ] `hooks/useServices.ts` — CRUD against local DB
-- [ ] Renewal date tracking + status badges (`components/services/RenewalBadge.tsx`)
-- [ ] Local push notifications (`lib/notifications/scheduler.ts` — implement stub)
-- [ ] Contact detail: link services to contacts
+### Phase 2 — Services + Notifications ✅ COMPLETE
+- [x] Services: list by category, create, edit, delete, search (`app/(tabs)/services/`)
+- [x] `hooks/useServices.ts` — CRUD against local DB
+- [x] Renewal date tracking + status badges (`components/services/RenewalBadge.tsx`)
+- [x] Local push notifications (`lib/notifications/scheduler.ts`)
+- [x] Contact detail: link services to contacts
+- [x] Life phase profile — student/professional/business owner/freelancer/retired (`settings/profile.tsx`)
+- [x] Per-phase profile fields — course/batch, role/industry, domain/experience, etc.
+- [x] Per-phase relationship types — Batchmate, Senior, Colleague, Mentor, Customer, etc.
+- [x] `knownFrom` + `institutionName` + `relationshipType` on contacts
+- [x] Profile persisted to SQLite settings table (`lib/db/userProfile.ts`)
+- [ ] Import contacts from Google Contacts (People API using existing OAuth token)
+- [ ] Import contacts from other services (iCloud Contacts, LinkedIn — extensible importer pattern)
 
 ### Phase 3 — AI Document Extraction
-- [ ] Settings: AI provider picker + API key entry (`app/(tabs)/settings/ai.tsx`)
+- [x] Settings: AI provider picker + API key entry (`app/(tabs)/settings/ai.tsx`)
 - [ ] Document picker + camera capture (`app/(tabs)/services/scan.tsx`)
 - [ ] AI client — Claude / OpenAI / Gemini (`lib/ai/client.ts`)
 - [ ] Extraction → pre-fill service form flow

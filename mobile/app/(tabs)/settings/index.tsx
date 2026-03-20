@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { List, Divider, useTheme, Avatar, Text } from 'react-native-paper';
 import { useAuthStore } from '@/stores/authStore';
 import { signOutGoogle } from '@/lib/auth/google';
@@ -8,6 +8,7 @@ import { signOutGoogle } from '@/lib/auth/google';
 export default function SettingsScreen() {
   const theme = useTheme();
   const { user, signOut } = useAuthStore();
+  const router = useRouter();
 
   async function handleSignOut() {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -50,13 +51,26 @@ export default function SettingsScreen() {
         <Divider />
 
         <List.Section>
+          <List.Subheader>Profile</List.Subheader>
+          <List.Item
+            title="My Profile"
+            description="Life phase, institution — tunes your contacts experience"
+            left={(props) => <List.Icon {...props} icon="account-circle" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={() => router.push('/(tabs)/settings/profile')}
+          />
+        </List.Section>
+
+        <Divider />
+
+        <List.Section>
           <List.Subheader>AI</List.Subheader>
           <List.Item
             title="AI Provider & API Key"
             description="Configure Claude, OpenAI, or Gemini"
             left={(props) => <List.Icon {...props} icon="robot" />}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => {/* Phase 3 */}}
+            onPress={() => router.push('/(tabs)/settings/ai')}
           />
         </List.Section>
 

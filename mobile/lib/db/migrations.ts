@@ -80,4 +80,10 @@ export async function runMigrations(db: SQLite.SQLiteDatabase): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_services_renewal ON services(renewal_date);
     CREATE INDEX IF NOT EXISTS idx_interactions_contact ON contact_interactions(contact_id);
   `);
+
+  // Phase 2 migration — add knownFrom + institutionName to contacts
+  // IF NOT EXISTS is not supported in ALTER TABLE — use try/catch per column
+  try { await db.execAsync(`ALTER TABLE contacts ADD COLUMN known_from TEXT;`); } catch {}
+  try { await db.execAsync(`ALTER TABLE contacts ADD COLUMN institution_name TEXT;`); } catch {}
+  try { await db.execAsync(`ALTER TABLE contacts ADD COLUMN relationship_type TEXT;`); } catch {}
 }

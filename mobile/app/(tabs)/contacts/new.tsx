@@ -9,8 +9,15 @@ export default function NewContactScreen() {
 
   async function handleSubmit(values: ContactFormValues) {
     await createContact({
-      ...values,
+      name: values.name,
       email: values.email || null,
+      phone: values.phone ?? null,
+      company: values.company ?? null,
+      role: values.role ?? null,
+      knownFrom: values.knownFrom ?? null,
+      institutionName: values.institutionName ?? null,
+      relationshipType: values.relationshipType ?? null,
+      notes: values.notes ?? null,
       tags: JSON.stringify(values.tags),
     });
     router.back();

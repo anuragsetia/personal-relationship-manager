@@ -7,13 +7,6 @@ type Props = {
   onPress: () => void;
 };
 
-const RELATIONSHIP_COLORS: Record<string, string> = {
-  family: '#E8F5E9',
-  friend: '#E3F2FD',
-  professional: '#FFF3E0',
-  vendor: '#F3E5F5',
-};
-
 function getInitials(name: string): string {
   return name
     .split(' ')
@@ -25,9 +18,6 @@ function getInitials(name: string): string {
 
 export function ContactCard({ contact, onPress }: Props) {
   const theme = useTheme();
-  const bgColor = contact.relationship
-    ? RELATIONSHIP_COLORS[contact.relationship]
-    : theme.colors.secondaryContainer;
 
   const left = () =>
     contact.avatarUri ? (
@@ -36,15 +26,22 @@ export function ContactCard({ contact, onPress }: Props) {
       <Avatar.Text
         size={40}
         label={getInitials(contact.name)}
-        style={{ backgroundColor: bgColor, marginRight: 4 }}
-        labelStyle={{ color: theme.colors.onSurface }}
+        style={{ backgroundColor: theme.colors.secondaryContainer, marginRight: 4 }}
+        labelStyle={{ color: theme.colors.onSecondaryContainer }}
       />
     );
+
+  const description = [
+    contact.relationshipType,
+    contact.institutionName ?? contact.company,
+  ]
+    .filter(Boolean)
+    .join(' · ') || contact.knownFrom || contact.email;
 
   return (
     <List.Item
       title={contact.name}
-      description={[contact.company, contact.role].filter(Boolean).join(' · ') || contact.email}
+      description={description}
       left={left}
       onPress={onPress}
     />

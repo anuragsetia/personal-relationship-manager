@@ -4,6 +4,7 @@ import { PaperProvider } from 'react-native-paper';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useSQLiteContext, SQLiteProvider } from 'expo-sqlite';
 import { useAuthStore } from '@/stores/authStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { runMigrations } from '@/lib/db/migrations';
 import { configureGoogleSignIn } from '@/lib/auth/google';
 import { theme } from '@/constants/theme';
@@ -33,9 +34,13 @@ function AuthGate() {
 function DBProvider({ children }: { children: React.ReactNode }) {
   const db = useSQLiteContext();
   const setLoading = useAuthStore((s) => s.setLoading);
+  const loadProfile = useSettingsStore((s) => s.loadProfile);
 
   useEffect(() => {
-    runMigrations(db).then(() => setLoading(false));
+    runMigrations(db).then(() => {
+      setLoading(false);
+      loadProfile();
+    });
   }, []);
 
   return <>{children}</>;

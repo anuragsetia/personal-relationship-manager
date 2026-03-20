@@ -7,7 +7,9 @@ export const contacts = sqliteTable('contacts', {
   phone: text('phone'),
   company: text('company'),
   role: text('role'),
-  relationship: text('relationship').$type<'family' | 'friend' | 'professional' | 'vendor'>(),
+  knownFrom: text('known_from'),
+  institutionName: text('institution_name'),
+  relationshipType: text('relationship_type'),
   notes: text('notes'),
   tags: text('tags'), // JSON string array
   source: text('source').$type<'manual' | 'device' | 'google' | 'apple'>().default('manual'),

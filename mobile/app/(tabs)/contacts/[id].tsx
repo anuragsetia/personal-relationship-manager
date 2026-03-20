@@ -13,8 +13,10 @@ import {
 } from 'react-native-paper';
 import { format } from 'date-fns';
 import { useContact, useContactInteractions, useDeleteContact, useUpdateContact } from '@/hooks/useContacts';
+import { useServices } from '@/hooks/useServices';
 import { InteractionLogList } from '@/components/contacts/InteractionLogList';
 import { ContactForm, type ContactFormValues } from '@/components/contacts/ContactForm';
+import { ServiceCard } from '@/components/services/ServiceCard';
 
 export default function ContactDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -25,8 +27,11 @@ export default function ContactDetailScreen() {
 
   const { data: contact, isLoading } = useContact(id);
   const { data: interactions = [] } = useContactInteractions(id);
+  const { data: linkedServices = [] } = useServices(undefined, undefined);
   const { mutateAsync: deleteContact } = useDeleteContact();
   const { mutateAsync: updateContact } = useUpdateContact();
+
+  const contactServices = linkedServices.filter((s) => s.contactId === id);
 
   if (isLoading) return <ActivityIndicator style={{ flex: 1, marginTop: 32 }} />;
   if (!contact) return <Text style={{ padding: 16 }}>Contact not found.</Text>;
@@ -51,8 +56,15 @@ export default function ContactDetailScreen() {
     await updateContact({
       id,
       data: {
-        ...values,
+        name: values.name,
         email: values.email || null,
+        phone: values.phone ?? null,
+        company: values.company ?? null,
+        role: values.role ?? null,
+        knownFrom: values.knownFrom ?? null,
+        institutionName: values.institutionName ?? null,
+        relationshipType: values.relationshipType ?? null,
+        notes: values.notes ?? null,
         tags: JSON.stringify(values.tags),
       },
     });
@@ -77,7 +89,9 @@ export default function ContactDetailScreen() {
             phone: contact.phone ?? '',
             company: contact.company ?? '',
             role: contact.role ?? '',
-            relationship: contact.relationship ?? undefined,
+            knownFrom: contact.knownFrom ?? undefined,
+            institutionName: contact.institutionName ?? '',
+            relationshipType: contact.relationshipType ?? undefined,
             notes: contact.notes ?? '',
             tags,
           }}
@@ -116,9 +130,17 @@ export default function ContactDetailScreen() {
               {[contact.role, contact.company].filter(Boolean).join(' at ')}
             </Text>
           ) : null}
-          {contact.relationship && (
-            <Chip compact style={styles.chip}>{contact.relationship}</Chip>
-          )}
+          <View style={[styles.tags, { marginTop: 4 }]}>
+            {contact.relationshipType && (
+              <Chip compact style={styles.chip}>{contact.relationshipType}</Chip>
+            )}
+            {contact.knownFrom && (
+              <Chip compact style={styles.chip}>via {contact.knownFrom}</Chip>
+            )}
+            {contact.institutionName && (
+              <Chip compact style={styles.chip}>{contact.institutionName}</Chip>
+            )}
+          </View>
         </View>
 
         <Divider />
@@ -152,6 +174,23 @@ export default function ContactDetailScreen() {
         )}
 
         <Divider />
+
+        {/* Linked services */}
+        {contactServices.length > 0 && (
+          <>
+            <View style={styles.section}>
+              <Text variant="labelLarge" style={styles.sectionTitle}>Services</Text>
+              {contactServices.map((service) => (
+                <ServiceCard
+                  key={service.id}
+                  service={service}
+                  onPress={() => router.push(`/(tabs)/services/${service.id}`)}
+                />
+              ))}
+            </View>
+            <Divider />
+          </>
+        )}
 
         {/* Interaction log */}
         <View style={styles.section}>
