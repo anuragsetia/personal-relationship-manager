@@ -16,28 +16,23 @@ PRM is a cross-platform mobile app (iOS + Android) that lets users manage two co
 
 ## Architecture: Client-First, No Backend
 
-```
-┌────────────────────────────────────────────────────────┐
-│                  React Native + Expo App               │
-│                                                        │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────────────┐ │
-│  │ Contacts │  │ Services │  │  Document Scanner    │ │
-│  └──────────┘  └──────────┘  └──────────────────────┘ │
-│                                                        │
-│  ┌──────────────────────────────────────────────────┐ │
-│  │         Local SQLite (expo-sqlite + Drizzle)     │ │
-│  └──────────────────┬─────────────────┬────────────┘ │
-│                     │                 │               │
-│          ┌──────────▼──────┐ ┌────────▼──────────┐   │
-│          │  Google Drive   │ │  iCloud CloudKit  │   │
-│          │  (App Data)     │ │  (Apple users)    │   │
-│          └─────────────────┘ └───────────────────┘   │
-│                                                        │
-│  ┌──────────────────────────────────────────────────┐ │
-│  │  AI Client (Claude / OpenAI / Gemini)            │ │
-│  │  API key stored in Keychain/Keystore              │ │
-│  └──────────────────────────────────────────────────┘ │
-└────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph App["React Native + Expo App"]
+        Contacts["Contacts"]
+        Services["Services"]
+        Scanner["Document Scanner"]
+        AI["AI Client\nClaude / OpenAI / Gemini\nGoogle OAuth · on-device app · API key"]
+        DB["Local SQLite\nexpo-sqlite + Drizzle"]
+    end
+
+    Contacts --> DB
+    Services --> DB
+    Scanner --> AI
+    AI --> Services
+
+    DB --> Drive["Google Drive\nApp Data"]
+    DB --> iCloud["iCloud\nApple users · Phase 10"]
 ```
 
 **No proxy server. No Firebase. No central DB.**
