@@ -272,7 +272,7 @@ EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=<from Google Cloud Console>
 |---|---|---|
 | 1 — Foundation | ✅ Complete | Expo init, SQLite/Drizzle, Auth, Contacts CRUD, tab layout |
 | 2 — Services + Notifications | ⬜ Next | Services CRUD, renewal badges, local push notifications |
-| 3 — AI Extraction | ⬜ | AI key settings, doc pick/camera, extract → pre-fill service form |
+| 3 — AI Extraction | ✅ Complete | AI key settings, doc pick/camera, extract → pre-fill service form |
 | 4 — Cloud Sync | ⬜ | Google Drive App Data sync, sync status UI |
 | 5 — Polish + iCloud | ⬜ | iCloud via EAS Build, search, bulk ops, export, onboarding |
 

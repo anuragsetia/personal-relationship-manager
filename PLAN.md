@@ -385,12 +385,12 @@ npx expo start
 - [ ] Import contacts from Google Contacts (People API using existing OAuth token)
 - [ ] Import contacts from other services (iCloud Contacts, LinkedIn — extensible importer pattern)
 
-### Phase 3 — AI Document Extraction
+### Phase 3 — AI Document Extraction ✅ COMPLETE
 - [x] Settings: AI provider picker + API key entry (`app/(tabs)/settings/ai.tsx`)
-- [ ] Document picker + camera capture (`app/(tabs)/services/scan.tsx`)
-- [ ] AI client — Claude / OpenAI / Gemini (`lib/ai/client.ts`)
-- [ ] Extraction → pre-fill service form flow
-- [ ] Document attachment to services (`lib/storage/fileStorage.ts`)
+- [x] Document picker + camera capture (`app/(tabs)/services/scan.tsx`)
+- [x] AI client — Claude / OpenAI / Gemini (`lib/ai/client.ts`)
+- [x] Extraction → pre-fill service form flow
+- [x] Document attachment to services (`lib/storage/fileStorage.ts`)
 
 ### Phase 4 — Cloud Sync
 - [ ] Google Drive App Data sync (`lib/sync/googleDrive.ts` — implement stub)
