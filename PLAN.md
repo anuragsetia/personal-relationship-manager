@@ -394,16 +394,185 @@ npx expo start
 
 ### Phase 4 — Cloud Sync
 - [ ] Google Drive App Data sync (`lib/sync/googleDrive.ts` — implement stub)
-- [ ] Device contacts import — already scaffolded, wire real sync
+  - GET/PUT `prm-backup.json` in Drive App Data folder
+  - Sync documents as `prm-docs/{id}` binaries
+  - Trigger on app foreground, after each write, manual pull-to-refresh
+  - Conflict: last-write-wins on `updatedAt`
 - [ ] Sync status UI + manual trigger (`app/(tabs)/settings/account.tsx`)
-- [ ] iCloud sync stub note in UI for Apple users
+- [ ] iCloud stub note in UI for Apple users (defer implementation to Phase 10)
 
-### Phase 5 — Polish + iCloud
+---
+
+## Vision: Three User Journeys
+
+PRM is not a single-purpose app. Users fall into three distinct groups and the app must serve all three without forcing irrelevant features on anyone.
+
+```
+Journey A — Contacts & Relationships
+  Primary goal: maintain rich context on people across life stages
+  Entry point: bulk import → enrich → query → stay connected
+
+Journey B — Services & Documents
+  Primary goal: track accounts, insurance, subscriptions; never miss a renewal
+  Entry point: scan a document or add a service manually
+
+Journey C — Both
+  Use contacts and services together — e.g. link an insurance agent to a policy
+```
+
+The onboarding flow asks the user which journey they are on. The answer shapes the tab layout, the home screen empty states, and the primary CTAs throughout the app. A user can change journey at any time in settings.
+
+---
+
+### Phase 5 — Onboarding + Journey Selection
+- [ ] First-launch onboarding screen sequence:
+  1. Welcome + value proposition
+  2. Journey picker: "Contacts & Relationships" / "Services & Documents" / "Both"
+  3. Life phase profile (already built — surface here instead of buried in settings)
+  4. AI setup wizard (simplified path — see Phase 8; fall back to API key for now)
+  5. For journey A/C: prompt to import contacts from Google/Apple as the first action
+- [ ] Persist chosen journey to settings table (`journey` key)
+- [ ] Adapt tab layout based on journey:
+  - Journey A: Contacts tab + Insights tab (hide Services or move to overflow)
+  - Journey B: Services tab (hide Contacts or move to overflow)
+  - Journey C: Contacts + Services + Settings (current layout)
+- [ ] Journey-aware empty states and in-app prompts
+- [ ] Allow journey change from `settings/index.tsx`
+- [ ] Verification: new install → pick journey A → only contacts tab visible → import prompt shown
+
+### Phase 6 — Natural Language Contact Entry
+*Forms are for databases. People are not databases.*
+
+Contact creation and updates via free-form text, interpreted by the AI agent in context of the user's life stage, relationship types, and existing contacts.
+
+**Entry points:**
+- Floating action in contacts list: "Add contact" → text field / voice
+- Quick-add from notification (new phone contact detected — see Phase 7)
+
+**Agent behaviour:**
+- Parse free-form input: `"Met Sarah at AWS re:Invent, VP Eng at Stripe, we talked distributed systems, she went to IIT Delhi"` → maps to name, company, role, tags, notes, institutionName, knownFrom
+- Context-aware: agent knows user's life phase and relationship vocabulary — a "Senior" means something different for a student vs a professional
+- Ambiguity resolution: if fields are unclear or a contact with a similar name already exists, agent asks a single clarifying question rather than showing a form
+- Update path: user can also type `"Sarah moved to Google"` → agent finds the contact and updates company
+- Confirmation step: agent shows a card summary of what it will create/update → user confirms or corrects
+
+**Technical:**
+- `lib/ai/contactAgent.ts` — multi-turn conversation loop, zod-validated output
+- `components/contacts/NaturalLanguageEntry.tsx` — chat-style input + confirmation card
+- `app/(tabs)/contacts/chat.tsx` — dedicated screen for the agent interaction
+- Reuses `lib/ai/client.ts` with a new system prompt for contact extraction
+
+- [ ] `lib/ai/contactAgent.ts` — agent prompt + conversation state machine
+- [ ] `components/contacts/NaturalLanguageEntry.tsx` — text input + agent reply + confirmation card
+- [ ] `app/(tabs)/contacts/chat.tsx` — agent screen
+- [ ] Wire FAB in contacts list to open agent screen
+- [ ] Update existing contact via natural language ("Sarah moved to Google")
+- [ ] Verification: type a sentence → agent extracts contact → confirm → contact appears in list
+
+### Phase 7 — Contact Intelligence + Contextual Queries
+*A contact list is only useful if you can find the right person at the right time.*
+
+**Query interface:**
+- Natural language search: `"who do I know from my college days?"`, `"find colleagues who work in fintech"`, `"people I haven't spoken to in 3 months"`
+- Powered by the AI agent with access to the local DB (contacts + interactions)
+- Rendered as a filtered contact list, not a chat
+
+**Surfaced insights:**
+- Relationship strength score based on interaction recency and frequency
+- "You haven't talked to X in N months" — gentle nudge cards on the home screen
+- Contacts grouped by life stage context (classmates, colleagues, clients, etc.)
+
+**Technical:**
+- `lib/ai/queryAgent.ts` — translates natural language query into a structured filter, executes against local DB
+- `app/(tabs)/contacts/query.tsx` — query input + results
+- `stores/insightsStore.ts` — caches computed relationship scores
+
+- [ ] `lib/ai/queryAgent.ts` — NL → filter → DB query → results
+- [ ] `app/(tabs)/contacts/query.tsx` — search-as-you-type NL query screen
+- [ ] Relationship strength scoring (interaction count × recency decay)
+- [ ] "Reconnect" nudge cards on contacts home (haven't spoken in X days)
+- [ ] Verification: query "people from my college" → correctly filters by institutionName + lifePhase context
+
+### Phase 8 — Bidirectional Contact Sync
+*PRM enriches your contacts. That enrichment should flow back.*
+
+**Write-back to Google Contacts:**
+- After creating/enriching a contact in PRM, offer to sync it back to Google Contacts via People API (existing OAuth token covers `contacts` scope)
+- Fields mapped back: name, phone, email, company, role, notes (as bio), custom fields as labels
+- User controls which contacts are synced back (opt-in per contact or bulk)
+
+**Write-back to Apple Contacts:**
+- Via `expo-contacts` write API — works on device without EAS Build
+- Same field mapping as Google
+
+**New contact detection:**
+- When a user adds a new contact to their phone (Google Contacts / Apple Contacts), PRM should surface it and ask if they want to add context
+- Mechanism: on app foreground, compare device contacts against PRM contacts (by phone/email), highlight new ones
+- Presented as a `"You added 3 new contacts recently — want to add context?"` prompt, not a background notification
+- Tapping opens the natural language agent (Phase 6) pre-seeded with the contact's basic info
+
+- [ ] People API write-back (`lib/sync/googleContacts.ts`) — create/update contact
+- [ ] Apple Contacts write-back via `expo-contacts` write (`lib/sync/appleContacts.ts`)
+- [ ] Per-contact "sync back" toggle on contact detail screen
+- [ ] New contact detection on app foreground (`hooks/useNewContactDetection.ts`)
+- [ ] "New contacts added" prompt card on contacts home
+- [ ] Verification: enrich a contact in PRM → sync back → open Google Contacts → see updated fields
+
+### Phase 9 — Simplified AI Integration
+*Users should not need to understand API keys.*
+
+**Problem:** The current AI setup (Settings → AI → paste API key) is a barrier for non-technical users.
+
+**Solution options (in order of preference):**
+
+1. **Google OAuth path (Gemini)** — user is already signed in with Google. Use the existing Google access token to call Gemini via the Google AI API. No additional setup needed for Google users. This covers the majority of Android users and many iOS users.
+
+2. **On-device AI app integration** — if the user has the Gemini app or Claude app installed, use platform deep-link / share-sheet integration to hand off a prompt and receive a response. Android supports this via Intent extras; iOS via Universal Links / Share Extensions. This requires no API key and no account — just the app being installed.
+   - Android: `Intent.ACTION_PROCESS_TEXT` or custom Gemini/Claude intents
+   - iOS: Share extension or URL scheme (e.g. `claude://`, `gemini://`) — subject to what each app exposes
+   - Fallback: if the app is not installed, surface a one-tap install link
+
+3. **On-device inference (future)** — Apple Intelligence (iOS 18+) and Gemini Nano (Android) can run inference locally with no API key. Deferred until Expo/React Native support matures.
+
+4. **API key (advanced / fallback)** — keep the current settings screen but demote it to "Advanced". Pre-fill the model field with sensible defaults. Show a plain-English explanation of what the key is and where to get one.
+
+**UX changes:**
+- During onboarding (Phase 5), AI setup step shows: "Sign in with Google to use AI for free" (if Google user) or "Enter your API key" (Apple user or advanced)
+- Settings → AI screen redesigned: Google OAuth as primary option, API key as secondary
+- If no AI is configured, features that require it show a gentle prompt to set it up rather than an error
+
+- [ ] `lib/ai/googleAI.ts` — call Gemini via Google OAuth token (no separate API key)
+- [ ] Onboarding AI step: detect Google auth → offer one-tap Gemini setup
+- [ ] Redesign `settings/ai.tsx` — OAuth path primary, API key secondary
+- [ ] Graceful degradation: NL entry and scan still work, just prompt for AI setup if not configured
+- [ ] Verification: Google user completes onboarding → AI works with zero API key input
+
+### Phase 10 — Polish + iCloud
 - [ ] iCloud sync via EAS Build + config plugin (`lib/sync/icloud.ts` — implement stub)
-- [ ] Full-text search across contacts + services
-- [ ] Bulk operations (delete, tag, categorise)
-- [ ] Export to CSV / JSON
-- [ ] Onboarding flow
+- [ ] Full-text search across contacts + services (SQLite FTS5)
+- [ ] Bulk operations (delete, tag, categorise) with multi-select UI
+- [ ] Export to CSV / JSON (contacts and/or services)
+- [ ] App home screen widget — quick lookup of recent/starred contacts
+- [ ] Accessibility audit (VoiceOver / TalkBack)
+- [ ] Performance: virtualised lists, DB query profiling
+- [ ] Verification: Apple user data syncs to iCloud → accessible on another Apple device
+
+---
+
+## Phase Summary
+
+| Phase | Status | Summary |
+|---|---|---|
+| 1 — Foundation | ✅ Complete | Expo scaffold, SQLite/Drizzle, Auth, Contacts CRUD, tab layout |
+| 2 — Services + Notifications | ✅ Complete | Services CRUD, renewal badges, notifications, life phase profiles |
+| 3 — AI Extraction | ✅ Complete | Document scan, AI extraction, pre-fill service form |
+| 4 — Cloud Sync | ⬜ Next | Google Drive App Data backup + sync |
+| 5 — Onboarding + Journeys | ⬜ | First-run flow, journey selection, adapted UI per journey |
+| 6 — NL Contact Entry | ⬜ | AI agent for natural language contact creation + updates |
+| 7 — Contact Intelligence | ⬜ | NL queries, relationship scoring, reconnect nudges |
+| 8 — Bidirectional Contact Sync | ⬜ | Write back to Google/Apple Contacts, detect new phone contacts |
+| 9 — Simplified AI | ⬜ | Google OAuth → Gemini with no API key; redesigned AI settings |
+| 10 — Polish + iCloud | ⬜ | iCloud sync, FTS, bulk ops, export, widget |
 
 ---
 
@@ -411,28 +580,31 @@ npx expo start
 
 | Question | Default / Deferral |
 |---|---|
-| iCloud sync in Phase 1? | Local-only for Apple users in Phase 1; iCloud in Phase 5 |
-| Multi-account support (multiple Google accounts)? | Single account per app install in Phase 1 |
+| iCloud sync in Phase 1? | Local-only for Apple users in Phase 1; iCloud in Phase 10 |
+| Multi-account support (multiple Google accounts)? | Single account per app install |
 | Sharing contacts/services with other PRM users? | Out of scope for now |
 | Web app companion? | Out of scope; data model is compatible if added later |
 | Document storage limit on Drive App Data? | Drive App Data is free, no user quota impact |
+| On-device AI (Apple Intelligence / Gemini Nano)? | Deferred to Phase 10 — React Native support not mature |
+| LinkedIn / other contact source import? | Extensible importer pattern; LinkedIn needs their API approval |
+| Voice input for NL contact entry? | expo-speech / device voice input — deferred to Phase 6 implementation |
 
 ---
 
 ## Key Packages (package.json additions)
 
 ```json
-"expo": "~52.0.0",
-"expo-router": "~4.0.0",
-"expo-sqlite": "~14.0.0",
-"expo-secure-store": "~13.0.0",
-"expo-document-picker": "~12.0.0",
-"expo-image-picker": "~16.0.0",
-"expo-file-system": "~17.0.0",
-"expo-contacts": "~13.0.0",
-"expo-notifications": "~0.28.0",
-"expo-apple-authentication": "~7.0.0",
-"@react-native-google-signin/google-signin": "^12.0.0",
+"expo": "~55.0.0",
+"expo-router": "~55.0.0",
+"expo-sqlite": "~55.0.0",
+"expo-secure-store": "~55.0.0",
+"expo-document-picker": "~55.0.0",
+"expo-image-picker": "~55.0.0",
+"expo-file-system": "~55.0.0",
+"expo-contacts": "~55.0.0",
+"expo-notifications": "~55.0.0",
+"expo-apple-authentication": "~55.0.0",
+"@react-native-google-signin/google-signin": "^16.0.0",
 "drizzle-orm": "^0.38.0",
 "drizzle-kit": "^0.29.0",
 "zustand": "^5.0.0",
@@ -447,8 +619,13 @@ npx expo start
 
 ## Verification Checklist (per phase)
 
-- **Phase 1**: Sign in with Google → contacts list loads → create/edit/delete contact → sign out → data persists locally after sign-in
-- **Phase 2**: Create service with renewal date → notification scheduled → receive reminder notification
-- **Phase 3**: Pick PDF → AI extracts fields → pre-filled form appears → confirm → service created with document attached
+- **Phase 1**: Sign in with Google → contacts list loads → create/edit/delete contact → data persists locally
+- **Phase 2**: Create service with renewal date → notification scheduled → receive reminder
+- **Phase 3**: Pick PDF → AI extracts fields → pre-filled form → confirm → service created with document
 - **Phase 4**: Create contact on device A → sync to Drive → sign in on device B → contact appears
-- **Phase 5**: Apple user data syncs to iCloud → accessible on another Apple device
+- **Phase 5**: New install → journey picker → pick "Contacts only" → Services tab hidden → import prompt shown
+- **Phase 6**: Type "Met Sarah, VP Eng at Stripe, IIT Delhi" → agent extracts → confirm → contact created
+- **Phase 7**: Query "people from college" → filtered list by institutionName/lifePhase context
+- **Phase 8**: Enrich contact in PRM → sync back → see updated fields in Google Contacts
+- **Phase 9**: Google user completes onboarding → AI works without entering any API key
+- **Phase 10**: Apple user data syncs to iCloud → accessible on another Apple device

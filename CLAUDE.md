@@ -271,10 +271,15 @@ EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=<from Google Cloud Console>
 | Phase | Status | Summary |
 |---|---|---|
 | 1 — Foundation | ✅ Complete | Expo init, SQLite/Drizzle, Auth, Contacts CRUD, tab layout |
-| 2 — Services + Notifications | ⬜ Next | Services CRUD, renewal badges, local push notifications |
+| 2 — Services + Notifications | ✅ Complete | Services CRUD, renewal badges, local push notifications |
 | 3 — AI Extraction | ✅ Complete | AI key settings, doc pick/camera, extract → pre-fill service form |
-| 4 — Cloud Sync | ⬜ | Google Drive App Data sync, sync status UI |
-| 5 — Polish + iCloud | ⬜ | iCloud via EAS Build, search, bulk ops, export, onboarding |
+| 4 — Cloud Sync | ⬜ Next | Google Drive App Data sync, sync status UI |
+| 5 — Onboarding + Journeys | ⬜ | First-run flow, journey selection (contacts/services/both) |
+| 6 — NL Contact Entry | ⬜ | AI agent for natural language contact creation + updates |
+| 7 — Contact Intelligence | ⬜ | NL queries, relationship scoring, reconnect nudges |
+| 8 — Bidirectional Contact Sync | ⬜ | Write back to Google/Apple Contacts, detect new phone contacts |
+| 9 — Simplified AI | ⬜ | Google OAuth → Gemini; on-device AI apps; API key as fallback |
+| 10 — Polish + iCloud | ⬜ | iCloud via EAS Build, FTS, bulk ops, export, widget |
 
 Update `PLAN.md` checklist and this table when a phase completes.
 
