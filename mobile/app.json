@@ -55,6 +55,7 @@
           "photosPermission": "PRM uses photos to attach documents to your services."
         }
       ],
+      "@react-native-google-signin/google-signin",
       "@react-native-community/datetimepicker",
       "expo-font"
     ],

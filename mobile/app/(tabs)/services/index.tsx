@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SectionList, View, StyleSheet } from 'react-native';
-import { FAB, useTheme, Divider, ActivityIndicator, Text } from 'react-native-paper';
+import { FAB, useTheme, Divider, ActivityIndicator, Text, Portal } from 'react-native-paper';
 import { Stack, useRouter } from 'expo-router';
 import { useServices } from '@/hooks/useServices';
 import { ServiceCard } from '@/components/services/ServiceCard';
@@ -15,6 +15,7 @@ export default function ServicesScreen() {
   const theme = useTheme();
   const router = useRouter();
   const [search, setSearch] = useState('');
+  const [fabOpen, setFabOpen] = useState(false);
   const { data: allServices = [], isLoading } = useServices(undefined, search);
 
   const sections: Section[] = search
@@ -61,12 +62,27 @@ export default function ServicesScreen() {
         />
       )}
 
-      <FAB
-        icon="plus"
-        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
-        color={theme.colors.onPrimary}
-        onPress={() => router.push('/(tabs)/services/new')}
-      />
+      <Portal>
+        <FAB.Group
+          open={fabOpen}
+          visible
+          icon={fabOpen ? 'close' : 'plus'}
+          actions={[
+            {
+              icon: 'plus',
+              label: 'Add Manually',
+              onPress: () => router.push('/(tabs)/services/new'),
+            },
+            {
+              icon: 'file-document-scan-outline',
+              label: 'Scan Document',
+              onPress: () => router.push('/(tabs)/services/scan'),
+            },
+          ]}
+          onStateChange={({ open }) => setFabOpen(open)}
+          style={styles.fab}
+        />
+      </Portal>
     </View>
   );
 }
@@ -76,5 +92,5 @@ const styles = StyleSheet.create({
   loader: { flex: 1, marginTop: 32 },
   emptyList: { flex: 1 },
   sectionHeader: { paddingHorizontal: 16, paddingVertical: 6 },
-  fab: { position: 'absolute', right: 16, bottom: 16 },
+  fab: { position: 'absolute', right: 0, bottom: 0 },
 });

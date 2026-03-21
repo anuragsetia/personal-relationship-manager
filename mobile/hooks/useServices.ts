@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { eq, like, desc, or } from 'drizzle-orm';
 import { db } from '@/lib/db';
-import { services } from '@/lib/db/schema';
-import type { NewService } from '@/lib/db/schema';
+import { services, documents } from '@/lib/db/schema';
+import type { NewService, NewDocument } from '@/lib/db/schema';
 import { randomUUID } from 'expo-crypto';
 import { scheduleRenewalReminder, cancelRenewalReminder } from '@/lib/notifications/scheduler';
 import type { ServiceCategory } from '@/constants/serviceCategories';
@@ -95,6 +95,17 @@ export function useUpdateService() {
     onSuccess: (_r, { id }) => {
       queryClient.invalidateQueries({ queryKey: SERVICES_KEY });
       queryClient.invalidateQueries({ queryKey: [...SERVICES_KEY, id] });
+    },
+  });
+}
+
+export function useCreateDocument() {
+  return useMutation({
+    mutationFn: async (data: Omit<NewDocument, 'id' | 'createdAt' | 'updatedAt'>) => {
+      const now = Date.now();
+      const id = randomUUID();
+      await db.insert(documents).values({ ...data, id, createdAt: now, updatedAt: now });
+      return id;
     },
   });
 }
